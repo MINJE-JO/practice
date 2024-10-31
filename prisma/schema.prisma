@@ -22,6 +22,11 @@ enum StringPattern {
   PATTERN_14x16
 }
 
+enum QuestionCategory {
+  RACKET
+  STRING
+}
+
 model RacketDB {
   id            Int           @id @default(autoincrement())
   name          String
@@ -43,4 +48,19 @@ model StringDB {
   firmness      String
   durability    String
   color         String
+}
+
+model Question {
+  id            Int            @id @default(autoincrement())
+  category      QuestionCategory
+  questionNumber Int
+  questionText  String        
+  answerOptions AnswerOption[] 
+}
+
+model AnswerOption {
+  id         Int      @id @default(autoincrement())
+  option     String   
+  question   Question @relation(fields: [questionId], references: [id])
+  questionId Int
 }
