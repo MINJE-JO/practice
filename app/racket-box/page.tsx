@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 
 async function getRackets() {
-	const rackets = await prisma.racket.findMany({
+	const rackets = await prisma.racketDB.findMany({
 		orderBy: {
 			brand: "asc",
 		},

@@ -3,9 +3,63 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+}
+
+model RacketDB {
+  id            Int           @id @default(autoincrement())
+  name          String
+  brand         Brand
+  weight        Int
+  stringPattern StringPattern
+  balance       Int
+  headsize      Int
+  stiffness     Int
+  swingweight   Int
+}
+
+model StringDB {
+  id         Int    @id @default(autoincrement())
+  name       String
+  brand      Brand
+  gauge      Int
+  shape      String
+  firmness   String
+  durability String
+  color      String
+}
+
+model Question {
+  id             Int              @id @default(autoincrement())
+  questionText   String
+  category       QuestionCategory
+  questionNumber Int
+  answerOptions  AnswerOption[]
+  UserAnswer     UserAnswer[]
+
+  @@unique([category, questionNumber])
+}
+
+model AnswerOption {
+  id         Int          @id @default(autoincrement())
+  option     String
+  questionId Int
+  question   Question     @relation(fields: [questionId], references: [id])
+  UserAnswer UserAnswer[]
+}
+
+model UserAnswer {
+  id             Int          @id @default(autoincrement())
+  sessionId      String
+  questionId     Int
+  answerOptionId Int
+  createdAt      DateTime     @default(now())
+  AnswerOption   AnswerOption @relation(fields: [answerOptionId], references: [id])
+  Question       Question     @relation(fields: [questionId], references: [id])
+
+  @@unique([sessionId, questionId])
 }
 
 enum Brand {
@@ -25,42 +79,4 @@ enum StringPattern {
 enum QuestionCategory {
   RACKET
   STRING
-}
-
-model RacketDB {
-  id            Int           @id @default(autoincrement())
-  name          String
-  brand         Brand         
-  weight        Int           
-  stringPattern StringPattern 
-  stiffness    Int
-  balance       Int
-  headsize      Int
-  swingweight   Int
-}
-
-model StringDB {
-  id            Int           @id @default(autoincrement())
-  name          String
-  brand         Brand
-  gauge         Int
-  shape         String
-  firmness      String
-  durability    String
-  color         String
-}
-
-model Question {
-  id            Int            @id @default(autoincrement())
-  category      QuestionCategory
-  questionNumber Int
-  questionText  String        
-  answerOptions AnswerOption[] 
-}
-
-model AnswerOption {
-  id         Int      @id @default(autoincrement())
-  option     String   
-  question   Question @relation(fields: [questionId], references: [id])
-  questionId Int
 }
