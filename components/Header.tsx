@@ -8,7 +8,7 @@ export default function Header() {
 					{/* 로고 */}
 					<Link
 						href="/"
-						className="text-tennis-ball font-bold text-xl hover:opacity-90"
+						className="text-white font-bold text-xl hover:opacity-90"
 					>
 						FirstServe
 					</Link>
@@ -16,14 +16,14 @@ export default function Header() {
 					{/* 네비게이션 링크 */}
 					<nav className="flex gap-6">
 						<Link
-							href="/racket-encyclopedia"
-							className="text-court-line hover:text-tennis-ball transition-colors"
+							href="/racket-box"
+							className="text-white hover:text-tennis-ball transition-colors"
 						>
 							라켓 백과사전
 						</Link>
 						<Link
-							href="/string-encyclopedia"
-							className="text-court-line hover:text-tennis-ball transition-colors"
+							href="/string-box"
+							className="text-white hover:text-tennis-ball transition-colors"
 						>
 							스트링 백과사전
 						</Link>
