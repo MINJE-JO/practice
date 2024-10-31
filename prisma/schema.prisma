@@ -22,11 +22,25 @@ enum StringPattern {
   PATTERN_14x16
 }
 
-model Racket {
+model RacketDB {
   id            Int           @id @default(autoincrement())
   name          String
-  brand         Brand         // 윌슨/바볼랏/헤드/요넥스 중 선택
-  weight        Int           // 무게 (g)
-  stringPattern StringPattern // 미리 정의된 패턴 중 선택
-  balance       Int           // 밸런스 포인트 (mm)
+  brand         Brand         
+  weight        Int           
+  stringPattern StringPattern 
+  stiffness    Int
+  balance       Int
+  headsize      Int
+  swingweight   Int
+}
+
+model StringDB {
+  id            Int           @id @default(autoincrement())
+  name          String
+  brand         Brand
+  gauge         Int
+  shape         String
+  firmness      String
+  durability    String
+  color         String
 }

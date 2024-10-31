@@ -1,32 +1,79 @@
-export default function StringEncyclopedia() {
-  return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold text-tennis-ball mb-6">스트링 백과사전</h1>
-        
-        <div className="bg-accent-blue/10 backdrop-blur-sm border-2 border-court-line rounded-lg p-6">
-          <p className="text-court-line text-lg mb-4">
-            테니스 스트링의 모든 것을 알아보세요.
-          </p>
-          
-          {/* 임시 컨텐츠 */}
-          <div className="grid gap-4">
-            <div className="p-4 bg-court-blue/50 rounded-lg border border-court-line">
-              <h2 className="text-tennis-ball text-xl font-bold mb-2">스트링의 종류</h2>
-              <p className="text-court-line">
-                나일론, 폴리에스터, 천연거트 등 다양한 스트링의 특징을 알아봅니다.
-              </p>
-            </div>
-            
-            <div className="p-4 bg-court-blue/50 rounded-lg border border-court-line">
-              <h2 className="text-tennis-ball text-xl font-bold mb-2">텐션과 패턴</h2>
-              <p className="text-court-line">
-                스트링 텐션의 영향과 다양한 스트링 패턴에 대해 설명합니다.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+import Link from "next/link";
+import { prisma } from "@/lib/db";
+
+async function getStrings() {
+	const strings = await prisma.stringDB.findMany({
+		orderBy: {
+			brand: "asc",
+		},
+	});
+	return strings;
+}
+
+export default async function StringEncyclopedia() {
+	const strings = await getStrings();
+
+	// 브랜드별로 스트링 그룹화
+	const stringsByBrand = strings.reduce((acc, string) => {
+		if (!acc[string.brand]) {
+			acc[string.brand] = [];
+		}
+		acc[string.brand].push(string);
+		return acc;
+	}, {} as Record<string, typeof strings>);
+
+	return (
+		<div className="min-h-screen p-8">
+			<div className="max-w-7xl mx-auto">
+				<h1 className="text-4xl font-bold text-tennis-ball mb-6">
+					스트링 백과사전
+				</h1>
+
+				<div className="bg-accent-blue/10 backdrop-blur-sm border-2 border-court-line rounded-lg p-6">
+					<div className="space-y-8">
+						{Object.entries(stringsByBrand).map(
+							([brand, brandStrings]) => (
+								<div key={brand} className="space-y-4">
+									<h2 className="text-2xl font-bold text-tennis-ball">
+										{brand}
+									</h2>
+									<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+										{brandStrings.map((string) => (
+											<Link
+												key={string.id}
+												href={`/string-box/${encodeURIComponent(
+													string.name
+														.toLowerCase()
+														.replace(/ /g, "-")
+												)}`}
+												className="block p-4 bg-court-blue/50 rounded-lg border border-court-line hover:border-tennis-ball transition-colors"
+											>
+												<h3 className="text-tennis-ball text-xl font-bold mb-2">
+													{string.name}
+												</h3>
+												<div className="space-y-1 text-court-line">
+													<p>
+														게이지: {string.gauge}
+													</p>
+													<p>형태: {string.shape}</p>
+													<p>
+														강도: {string.firmness}
+													</p>
+													<p>
+														내구성:{" "}
+														{string.durability}
+													</p>
+													<p>색상: {string.color}</p>
+												</div>
+											</Link>
+										))}
+									</div>
+								</div>
+							)
+						)}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }
