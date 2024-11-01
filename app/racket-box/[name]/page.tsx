@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 async function getRacketByName(name: string) {
-	const racket = await prisma.racket.findFirst({
+	const racket = await prisma.racketDB.findFirst({
 		where: {
 			name: {
 				equals: name

@@ -1,21 +1,26 @@
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { redirect } from "next/navigation";
+import { calculateRacketScores } from "@/lib/racket-calculator";
 
-async function getAnswersWithQuestions(sessionId: string) {
-	const answers = await prisma.userAnswer.findMany({
+export default async function RacketResultPage({
+	searchParams,
+}: {
+	searchParams: { session?: string };
+}) {
+	const sessionId = searchParams.session;
+
+	if (!sessionId) {
+		redirect("/racket-recommend");
+	}
+
+	// 해당 세션의 모든 답변 가져오기
+	const userAnswers = await prisma.userAnswer.findMany({
 		where: {
-			sessionId,
+			sessionId: sessionId,
 		},
 		include: {
-			Question: {
-				include: {
-					answerOptions: true,
-				},
-			},
+			Question: true,
 			AnswerOption: true,
 		},
 		orderBy: {
@@ -25,64 +30,51 @@ async function getAnswersWithQuestions(sessionId: string) {
 		},
 	});
 
-	if (!answers.length) notFound();
-	return answers;
-}
+	// 사용자 응답에 기반하여 라켓 추천 로직 구현
+	const recommendedRacket = await prisma.racketDB.findFirst({
+		where: {
+			// 여기에 사용자 응답에 기반한 필터 조건 추가
+		},
+	});
 
-export default async function RacketResultPage({
-	searchParams,
-}: {
-	searchParams: { session: string };
-}) {
-	const answers = await getAnswersWithQuestions(searchParams.session);
+	const racketScores = recommendedRacket
+		? calculateRacketScores(recommendedRacket)
+		: null;
 
 	return (
-		<div className="container mx-auto py-8 max-w-3xl">
-			<div className="flex items-center gap-4 mb-8">
-				<Button variant="ghost" asChild>
-					<Link href="/" className="flex items-center gap-2">
-						<ArrowLeft size={20} />
-						처음으로
-					</Link>
-				</Button>
-				<h1 className="text-4xl font-bold text-tennis-ball">
-					라켓 추천 결과
-				</h1>
-			</div>
-
-			<div className="grid gap-6">
-				{answers.map((answer) => (
-					<Card
-						key={answer.id}
-						className="border-2 border-court-line"
-					>
-						<CardHeader>
-							<CardTitle className="text-xl">
-								Q{answer.Question.questionNumber}.{" "}
-								{answer.Question.questionText}
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className="grid grid-cols-2 gap-4">
-								{answer.Question.answerOptions.map((option) => (
-									<Button
-										key={option.id}
-										variant={
-											option.id === answer.answerOptionId
-												? "default"
-												: "outline"
-										}
-										className="h-12"
-										disabled
-									>
-										{option.option}
-									</Button>
-								))}
+		<div className="container mx-auto py-8 max-w-2xl">
+			<Card className="border-4 border-court-line">
+				<CardHeader>
+					<CardTitle className="text-2xl">당신의 응답 결과</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<div className="space-y-4">
+						<p className="text-sm text-gray-500">
+							세션 ID: {sessionId}
+						</p>
+						{userAnswers.map((answer) => (
+							<div key={answer.id} className="border-b pb-4">
+								<p className="font-medium">
+									{answer.Question.questionText}
+								</p>
+								<p className="text-court-line">
+									선택: {answer.AnswerOption.option}
+								</p>
 							</div>
-						</CardContent>
-					</Card>
-				))}
-			</div>
+						))}
+						{racketScores && (
+							<div className="mt-6 space-y-2">
+								<h3 className="font-semibold">
+									라켓 특성 점수
+								</h3>
+								<p>파워: {racketScores.power}</p>
+								<p>스핀: {racketScores.spin}</p>
+								<p>컨트롤: {racketScores.control}</p>
+							</div>
+						)}
+					</div>
+				</CardContent>
+			</Card>
 		</div>
 	);
 }

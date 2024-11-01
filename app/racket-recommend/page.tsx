@@ -37,19 +37,23 @@ export default async function RacketRecommendPage({
 
 	const progress = (currentStep / questions.length) * 100;
 
-	async function handleAnswer(formData: FormData) {
+	async function saveAnswer(formData: FormData) {
 		"use server";
 
-		const questionId = formData.get("questionId");
-		const answerOptionId = formData.get("answerOptionId");
+		const questionId = Number(formData.get("questionId"));
+		const selectedOptionId = Number(formData.get("answerOptionId"));
 		const sessionId =
 			searchParams.sessionId || Math.random().toString(36).substring(7);
+
+		if (isNaN(questionId) || isNaN(selectedOptionId)) {
+			throw new Error("Invalid input values");
+		}
 
 		await prisma.userAnswer.create({
 			data: {
 				sessionId,
-				questionId: parseInt(questionId as string),
-				answerOptionId: parseInt(answerOptionId as string),
+				questionId,
+				answerOptionId: selectedOptionId,
 			},
 		});
 
@@ -80,7 +84,7 @@ export default async function RacketRecommendPage({
 					</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<form action={handleAnswer} className="space-y-4">
+					<form action={saveAnswer} className="space-y-4">
 						<input
 							type="hidden"
 							name="questionId"
