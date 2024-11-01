@@ -1,21 +1,112 @@
+import { prisma } from "@/lib/db";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { redirect } from "next/navigation";
+import { Progress } from "@/components/ui/progress";
 
-export default function StringRecommendPage() {
+async function getStringQuestions() {
+	const questions = await prisma.question.findMany({
+		where: {
+			category: "STRING",
+		},
+		include: {
+			answerOptions: true,
+		},
+		orderBy: {
+			questionNumber: "asc",
+		},
+	});
+	return questions;
+}
+
+export default async function StringRecommendPage({
+	searchParams,
+}: {
+	searchParams: { step?: string; sessionId?: string };
+}) {
+	const questions = await getStringQuestions();
+	const currentStep = parseInt(searchParams.step || "1");
+	const currentQuestion = questions.find(
+		(q) => q.questionNumber === currentStep
+	);
+
+	if (!currentQuestion) {
+		redirect("/string-recommend/string-result");
+	}
+
+	const progress = (currentStep / questions.length) * 100;
+
+	async function handleAnswer(formData: FormData) {
+		"use server";
+
+		const questionId = formData.get("questionId");
+		const answerOptionId = formData.get("answerOptionId");
+		const sessionId =
+			searchParams.sessionId || Math.random().toString(36).substring(7);
+
+		await prisma.userAnswer.create({
+			data: {
+				sessionId,
+				questionId: parseInt(questionId as string),
+				answerOptionId: parseInt(answerOptionId as string),
+			},
+		});
+
+		if (currentStep >= questions.length) {
+			redirect(`/string-recommend/string-result?session=${sessionId}`);
+		} else {
+			redirect(
+				`/string-recommend?step=${
+					currentStep + 1
+				}&sessionId=${sessionId}`
+			);
+		}
+	}
+
 	return (
-		<div className="flex flex-col items-center justify-center min-h-screen gap-4">
-			<div className="relative p-8 rounded-lg border-4 border-court-line bg-accent-blue/10 backdrop-blur-sm">
-				<h1 className="text-4xl font-bold text-tennis-ball mb-4">
-					스트링 추천 페이지
-				</h1>
-				<div className="flex gap-4 mb-4">
-					<Button variant="default">ㅁㄴㅁㄴㄹㅁㄴㄹㄴㅁㄹ</Button>
-					<Button variant="default">ㅁㄴㄹ</Button>
-				</div>
-				<p className="text-court-line">
-					여기에 추천 컨텐츠를 추가하세요
+		<div className="container mx-auto py-8 max-w-2xl">
+			<div className="mb-8">
+				<Progress value={progress} className="mb-2" />
+				<p className="text-sm text-court-line text-right">
+					{currentStep} / {questions.length}
 				</p>
-				<div className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-tennis-ball shadow-lg" />
 			</div>
+
+			<Card className="border-4 border-court-line">
+				<CardHeader>
+					<CardTitle className="text-2xl">
+						{currentQuestion.questionText}
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<form action={handleAnswer} className="space-y-4">
+						<input
+							type="hidden"
+							name="questionId"
+							value={currentQuestion.id}
+						/>
+						<input
+							type="hidden"
+							name="sessionId"
+							value={searchParams.sessionId || ""}
+						/>
+						<div className="grid grid-cols-1 gap-4">
+							{currentQuestion.answerOptions.map((option) => (
+								<Button
+									key={option.id}
+									type="submit"
+									name="answerOptionId"
+									value={option.id}
+									variant="outline"
+									className="h-16 text-lg"
+								>
+									{option.option}
+								</Button>
+							))}
+						</div>
+					</form>
+				</CardContent>
+			</Card>
 		</div>
 	);
 }
